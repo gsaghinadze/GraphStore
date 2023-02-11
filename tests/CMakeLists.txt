@@ -9,7 +9,7 @@ FetchContent_MakeAvailable(googletest)
 
 add_executable(graph_store_test graph_store_test.cpp)
 
-target_link_libraries(graph_store_test gtest_main)
+target_link_libraries(graph_store_test gtest_main graph_store)
 
 include(GoogleTest)
 gtest_discover_tests(graph_store_test)
