@@ -7,15 +7,7 @@
 
 namespace graph_util {
 
-    struct Edge {
-        std::uint64_t from;
-        std::uint64_t to;
-    };
 
-    struct Path {
-        std::uint64_t length;
-        std::vector<int> vertices;
-    };
 
 } // graph_util
 
