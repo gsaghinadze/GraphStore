@@ -11,6 +11,7 @@
 *.gch
 *.pch
 
+target_include_directories(graph_store PUBLIC include)
 # Compiled Dynamic libraries
 *.so
 *.dylib

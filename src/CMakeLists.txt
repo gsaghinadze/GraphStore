@@ -1,0 +1,1 @@
+add_library(graph_store graph_store.cpp)
