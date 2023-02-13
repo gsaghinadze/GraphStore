@@ -21,7 +21,14 @@ namespace graph_store {
     class GraphStore {
     public:
 
+        enum class Strategy {
+            OPTIMIZED_PERFORMANCE,
+            OPTIMIZED_MEMORY
+        };
+
         GraphStore();
+
+        GraphStore(Strategy strategy);
 
         ~GraphStore();
 
@@ -33,7 +40,9 @@ namespace graph_store {
         ///
         GraphStore(const std::uint64_t vertex_count,
                    const std::unordered_map<std::string, graph_util::VertexSet> &label_to_vertices,
-                   const std::vector<graph_util::Edge> &edges);
+                   const std::vector<graph_util::Edge> &edges,
+                   const Strategy strategy = Strategy::OPTIMIZED_MEMORY
+                   );
 
         /// @brief Creates a new vertex in the Graph Store
         ///
@@ -82,7 +91,6 @@ namespace graph_store {
         ///
         std::optional<graph_util::Path>
         ShortestPath(const std::uint64_t src_vertex_id, const std::uint64_t dst_vertex_id, const std::string &label);
-
     private:
         graph_util::LabelledGraph graph_;
         graph_util::VertexState *vertex_state_;
@@ -92,6 +100,12 @@ namespace graph_store {
         /// @return true if the vertex exists, returns false otherwise
         ///
         bool vertexExists(const std::uint64_t vertex_id);
+
+        ///
+        /// @param path to return
+        /// @return std::optional<graph_util::Path>
+        ///
+        std::optional<graph_util::Path> resetVertexStateAndReturn(const std::optional<graph_util::Path> &path);
     };
 
 } // namespace graph_store

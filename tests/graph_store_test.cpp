@@ -35,7 +35,7 @@ std::vector<graph_util::Edge> GenerateRandomGraph(std::int64_t vertex_count, std
 
     for (auto i = 0; i < edge_count; ++i) {
         graph_util::Edge edge;
-        // multiple edges are allowed according to the Graph Store implementation.
+        // Multiple edges are allowed according to the Graph Store implementation.
         edge.source_vertex = std::rand() % vertex_count;
         edge.destination_vertex = std::rand() % vertex_count;
         edges.push_back(edge);
@@ -100,14 +100,14 @@ class GraphStorePTest : public ::testing::TestWithParam<GraphStoreTestParam> {
 
 INSTANTIATE_TEST_SUITE_P(GraphStoreTestSuite, GraphStorePTest, ::testing::ValuesIn(params));
 
-TEST_P(GraphStorePTest, TestShortestPath) {
+TEST_P(GraphStorePTest, TestShortestPathOptimizedMemory) {
     graph_store::GraphStore gs(4, {{"1", {0, 1, 3}},
                                    {"2", {0, 2, 3}},
                                    {"3", {0, 3}}},
                                {{0, 1},
                                 {0, 2},
                                 {1, 3},
-                                {2, 3}});
+                                {2, 3}}, graph_store::GraphStore::Strategy::OPTIMIZED_MEMORY);
 
     auto param = GetParam();
 
@@ -125,20 +125,56 @@ TEST_P(GraphStorePTest, TestShortestPath) {
 
     graph_util::Path empty_path = {0, {}};
     EXPECT_EQ(gs.ShortestPath(param.src_vertex_id, param.dst_vertex_id, param.label).value_or(empty_path), param.want);
-
 }
 
-TEST(GraphStoreTest, SingleVertexNoLabel) {
-    std::string label = "testLabel";
-    graph_store::GraphStore gs;
+// Duplicated code compared to previous test. I could not find the good solution to run the same test code for different
+// GraphStore configurations.
+TEST_P(GraphStorePTest, TestShortestPathOptimizedPerformance) {
+    graph_store::GraphStore gs(4, {{"1", {0, 1, 3}},
+                                   {"2", {0, 2, 3}},
+                                   {"3", {0, 3}}},
+                               {{0, 1},
+                                {0, 2},
+                                {1, 3},
+                                {2, 3}}, graph_store::GraphStore::Strategy::OPTIMIZED_PERFORMANCE);
+
+    auto param = GetParam();
+
+    for (const auto &[action, action_val]: param.actions) {
+        if (action == "AddLabel") {
+            gs.AddLabel(action_val.first, std::to_string(action_val.second));
+        } else if (action == "RemoveLabel") {
+            gs.RemoveLabel(action_val.first, std::to_string(action_val.second));
+        } else if (action == "CreateEdge") {
+            gs.CreateEdge(action_val.first, action_val.second);
+        } else if (action == "CreateVertex") {
+            gs.CreateVertex();
+        }
+    }
+
+    graph_util::Path empty_path = {0, {}};
+    EXPECT_EQ(gs.ShortestPath(param.src_vertex_id, param.dst_vertex_id, param.label).value_or(empty_path), param.want);
+}
+
+class GraphStoreTestWithDifferentStrategies : public ::testing::TestWithParam<graph_store::GraphStore::Strategy> {
+};
+
+INSTANTIATE_TEST_SUITE_P(GraphStoreTestSuite, GraphStoreTestWithDifferentStrategies,
+                         ::testing::Values(graph_store::GraphStore::Strategy::OPTIMIZED_PERFORMANCE,
+                                           graph_store::GraphStore::Strategy::OPTIMIZED_MEMORY));
+
+
+TEST_P(GraphStoreTestWithDifferentStrategies, SingleVertexNoLabel) {
+    graph_store::GraphStore gs(GetParam());
     auto id = gs.CreateVertex();
 
+    std::string label = "testLabel";
     // Path to itself does not exist because vertex has no label.
     ASSERT_FALSE(gs.ShortestPath(id, id, label).has_value());
 }
 
-TEST(GraphStoreTest, SingleVertexWithLabel) {
-    graph_store::GraphStore gs;
+TEST_P(GraphStoreTestWithDifferentStrategies, SingleVertexWithLabel) {
+    graph_store::GraphStore gs(GetParam());
     std::string label = "testLabel";
     auto id = gs.CreateVertex();
 
@@ -151,8 +187,8 @@ TEST(GraphStoreTest, SingleVertexWithLabel) {
     ASSERT_EQ(path.value(), want);
 }
 
-TEST(GraphStoreTest, SameLabelMultipleTimes) {
-    graph_store::GraphStore gs;
+TEST_P(GraphStoreTestWithDifferentStrategies, SameLabelMultipleTimes) {
+    graph_store::GraphStore gs(GetParam());
     std::string label = "testLabel";
     auto id = gs.CreateVertex();
 
@@ -166,8 +202,8 @@ TEST(GraphStoreTest, SameLabelMultipleTimes) {
     ASSERT_FALSE(gs.ShortestPath(id, id, label).has_value());
 }
 
-TEST(GraphStoreTest, EmptyTwoVertexGraph) {
-    graph_store::GraphStore gs;
+TEST_P(GraphStoreTestWithDifferentStrategies, EmptyTwoVertexGraph) {
+    graph_store::GraphStore gs(GetParam());
     std::string label = "testLabel";
     auto id1 = gs.CreateVertex();
     auto id2 = gs.CreateVertex();
@@ -175,8 +211,8 @@ TEST(GraphStoreTest, EmptyTwoVertexGraph) {
     ASSERT_FALSE(gs.ShortestPath(id1, id2, label).has_value());
 }
 
-TEST(GraphStoreTest, TwoVertexGraphNoEdges) {
-    graph_store::GraphStore gs;
+TEST_P(GraphStoreTestWithDifferentStrategies, TwoVertexGraphNoEdges) {
+    graph_store::GraphStore gs(GetParam());
     std::string label = "testLabel";
     auto id1 = gs.CreateVertex();
     auto id2 = gs.CreateVertex();
@@ -189,8 +225,8 @@ TEST(GraphStoreTest, TwoVertexGraphNoEdges) {
     ASSERT_TRUE(gs.ShortestPath(id2, id2, label).has_value());
 }
 
-TEST(GraphStoreTest, TwoVertexGraphWithSingleEdge) {
-    graph_store::GraphStore gs;
+TEST_P(GraphStoreTestWithDifferentStrategies, TwoVertexGraphWithSingleEdge) {
+    graph_store::GraphStore gs(GetParam());
     std::string label = "testLabel";
     auto id1 = gs.CreateVertex();
     auto id2 = gs.CreateVertex();
@@ -204,13 +240,13 @@ TEST(GraphStoreTest, TwoVertexGraphWithSingleEdge) {
     ASSERT_EQ(path.value(), want);
 }
 
-TEST(GraphStoreTest, TwoVertexGraphWithMultipleLabels) {
+TEST_P(GraphStoreTestWithDifferentStrategies, TwoVertexGraphWithMultipleLabels) {
 
     std::string label1 = "testLabel1";
     std::string label2 = "testLabel2";
 
     graph_store::GraphStore gs(2, {{label1, {0, 1}},
-                                   {label2, {0, 1}}}, {{0, 1}});
+                                   {label2, {0, 1}}}, {{0, 1}}, GetParam());
 
     {
         auto path = gs.ShortestPath(0, 1, label1);
@@ -227,7 +263,7 @@ TEST(GraphStoreTest, TwoVertexGraphWithMultipleLabels) {
     }
 }
 
-TEST(GraphStoreTest, RandomGraphsWithOneLabel) {
+TEST_P(GraphStoreTestWithDifferentStrategies, RandomGraphsWithOneLabel) {
     for (auto i = 0; i < 100; ++i) {
         std::uint64_t vertex_count = std::rand() % 50 + 2;
         std::uint64_t edge_count = std::rand() % (vertex_count * (vertex_count - 1) / 2);
@@ -239,7 +275,7 @@ TEST(GraphStoreTest, RandomGraphsWithOneLabel) {
         auto edges = GenerateRandomGraph(vertex_count, edge_count);
         auto want_dis_matrix = FloydWarshall(vertex_count, edges);
 
-        graph_store::GraphStore gs(vertex_count, {{label, vertices}}, edges);
+        graph_store::GraphStore gs(vertex_count, {{label, vertices}}, edges, GetParam());
         adj_matrix got_dis_matrix(vertex_count, std::vector<std::uint64_t>(vertex_count, inf));
 
         for (auto i = 0; i < vertex_count; ++i) {
@@ -256,7 +292,7 @@ TEST(GraphStoreTest, RandomGraphsWithOneLabel) {
     }
 }
 
-TEST(GraphStoreTest, RandomGraphsWithMultipleLabels) {
+TEST_P(GraphStoreTestWithDifferentStrategies, RandomGraphsWithMultipleLabels) {
     for (auto i = 0; i < 100; ++i) {
         std::uint64_t vertex_count = rand() % 30 + 2;
         std::uint64_t edge_count = rand() % (vertex_count * (vertex_count - 1) / 2);
@@ -281,9 +317,9 @@ TEST(GraphStoreTest, RandomGraphsWithMultipleLabels) {
                                                              vertex_vector.begin() + num_vertices);
         }
 
-        graph_store::GraphStore gs(vertex_count, label_to_vertices, edges);
+        graph_store::GraphStore gs(vertex_count, label_to_vertices, edges, GetParam());
 
-        // Calculate shortest paths for each label.
+        // Calculate the shortest paths for each label.
         for (auto l = 0; l < label_count; ++l) {
             std::string label = std::to_string(l);
             adj_matrix got_dis_matrix(vertex_count, std::vector<std::uint64_t>(vertex_count, inf));
@@ -320,16 +356,16 @@ TEST(GraphStoreTest, RandomGraphsWithMultipleLabels) {
     }
 }
 
-TEST(GraphStoreTest, PerFormanceTest) {
+TEST_P(GraphStoreTestWithDifferentStrategies, PerFormanceTest) {
     const std::uint64_t vertex_count = 100000;
     const std::uint64_t edge_count = 1000000;
     const std::uint64_t label_count = 10;
     const std::uint64_t label_length = 1000;
     const std::uint64_t queries = 100;
-100
+
     auto start_time = std::chrono::system_clock::now();
 
-    graph_store::GraphStore gs;
+    graph_store::GraphStore gs(GetParam());
 
     for (auto i = 0; i < vertex_count; ++i) {
         gs.CreateVertex();
@@ -345,17 +381,17 @@ TEST(GraphStoreTest, PerFormanceTest) {
             labels[i] += char(i + '0');
         }
         for (auto j = 0; j < vertex_count; ++j) {
-            gs.AddLabel(j , labels[i]);
+            gs.AddLabel(j, labels[i]);
         }
     }
 
     for (auto i = 0; i < queries; ++i) {
-        gs.ShortestPath(0 , vertex_count - 1, labels[std::rand() % label_count]);
+        std::uint64_t src_vertex = std::rand() % vertex_count;
+        std::uint64_t dst_vertex = std::rand() % vertex_count;
+        auto path = gs.ShortestPath(src_vertex, dst_vertex, labels[std::rand() % label_count]);
     }
 
     auto end_time = std::chrono::system_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-
     ASSERT_TRUE(elapsed.count() < 10000);
-
 }

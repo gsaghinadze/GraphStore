@@ -54,9 +54,11 @@ namespace graph_util {
         /// @param dst_vertex_id The destination vertex
         /// @return The Path from the source_vertex to the source vertex the destination vertex
         ///
-        virtual Path FindPath(std::uint64_t src_vertex_id, std::uint64_t dst_vertex_id) = 0;
+        Path FindPath(std::uint64_t src_vertex_id, std::uint64_t dst_vertex_id);
 
         virtual void Reset() = 0;
+
+        virtual void ProcessVertexAddition();
     };
 
     ///
@@ -74,34 +76,49 @@ namespace graph_util {
 
         bool SetParent(std::uint64_t vertex_id, std::uint64_t parent_vertex_id);
 
-        Path FindPath(std::uint64_t src_vertex_id, std::uint64_t dst_vertex_id);
-
         void Reset();
 
     private:
-        // Parents map, vertex v is parent of the vertex parent[v]
+        // Parents map, vertex v is parent of the vertex parent[v].
         std::unordered_map<std::uint64_t, std::uint64_t> parent_;
 
-        // Distances map, distances[v] is the distance source_vertex the source vertex to the vertex v.
+        // Distances map, distances[v] is the distance to the vertex v.
         // If the vertex v is not present in the distances map, this means that BFS could not find the path source_vertex
         // the source to it, or BFS algorithm exited before reaching the vertex v.
         std::unordered_map<std::uint64_t, std::uint64_t> distances_;
     };
 
-    //TODO: implement
-    class OptimizedTimeVertexState : public VertexState {
+    ///
+    /// @brief OptimizedPerformanceVertexState implements VertexState, stores the distances and the parents in the vectors.
+    /// Set and Get operations are faster compared to OptimizedMemoryVertexState, because vectors are used to store the values.
+    /// OptimizedPerformanceVertexState has O(V) memory allocated all the time, where V is the number of vertices in the graph.
+    ///
+    class OptimizedPerformanceVertexState : public VertexState {
     public:
-        std::uint64_t GetDistance(std::uint64_t vertex_id) = 0;
+        std::uint64_t GetDistance(std::uint64_t vertex_id);
 
-        bool SetDistance(std::uint64_t vertex_id, std::uint64_t value) = 0;
+        bool SetDistance(std::uint64_t vertex_id, std::uint64_t value);
 
-        std::uint64_t GetParent(std::uint64_t vertex_id) = 0;
+        std::uint64_t GetParent(std::uint64_t vertex_id);
 
-        bool SetParent(std::uint64_t vertex_id, std::uint64_t parent_vertex_id) = 0;
+        bool SetParent(std::uint64_t vertex_id, std::uint64_t parent_vertex_id);
 
-        Path FindPath(std::uint64_t src_vertex_id, std::uint64_t dst_vertex_id) = 0;
+        void Reset() override;
 
-        void Reset() = 0;
+        void ProcessVertexAddition() override;
+    private:
+
+        // Parents vector, vertex v is the parent of the vertex parent[v].
+        std::vector<std::uint64_t> parent_;
+
+        // Distances vector, distances[v] is the distance to the vertex v.
+        // If the distance is not calculated for the vertex v, it's set to max value of std::uint64_t
+        std::vector<std::uint64_t> distances_;
+
+        // The indices, which were changed in the parent_ and distances_ vectors.
+        // affected_vertices_ is used to quickly reset parent_ and distances_ vectors, by only iterating the indices
+        // that were modified.
+        std::vector<std::uint64_t> affected_vertices_;
     };
 
 } // namespace graph_util
