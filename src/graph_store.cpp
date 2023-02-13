@@ -5,9 +5,8 @@
 
 namespace graph_store {
 
-    GraphStore::GraphStore() {
+    GraphStore::GraphStore() : GraphStore(Strategy::OPTIMIZED_PERFORMANCE) {
         // Use optimized performance VertexState by default.
-        vertex_state_ = new graph_util::OptimizedPerformanceVertexState();
     }
 
     GraphStore::GraphStore(Strategy strategy) {
@@ -21,8 +20,7 @@ namespace graph_store {
     GraphStore::GraphStore(const std::uint64_t vertex_count,
                            const std::unordered_map<std::string, graph_util::VertexSet> &label_to_vertices,
                            const std::vector<graph_util::Edge> &edges,
-                           const Strategy strategy) {
-        vertex_state_ = new graph_util::OptimizedPerformanceVertexState();
+                           const Strategy strategy) : GraphStore(strategy) {
 
         for (int i = 0; i < vertex_count; i++) {
             CreateVertex();
