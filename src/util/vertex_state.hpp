@@ -89,10 +89,13 @@ namespace graph_util {
     };
 
     ///
-    /// @brief OptimizedPerformanceVertexState implements VertexState, stores the distances and the parents in the vectors.
-    /// Set and Get operations are faster compared to OptimizedMemoryVertexState, because vectors are used to store the values.
-    /// OptimizedPerformanceVertexState has O(V) memory allocated all the time, where V is the number of vertices in the graph.
+    /// @brief OptimizedPerformanceVertexState implements VertexState, stores the distances and the parents in the
+    /// vectors. Set and Get operations are faster compared to OptimizedMemoryVertexState, because vectors are used to
+    /// store the values. OptimizedPerformanceVertexState has O(V) memory allocated all the time, where V is the number
+    /// of vertices in the graph. get and set operations have O(1) time complexity.
     ///
+    /// @note In order to not reduce the performance, safety checks are not implemented in the class.
+    /// When using this class the passed vertex_id-s should be valid.
     class OptimizedPerformanceVertexState : public VertexState {
     public:
         std::uint64_t GetDistance(std::uint64_t vertex_id) override;
