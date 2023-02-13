@@ -55,6 +55,7 @@ namespace graph_util {
         /// @return The Path from the source_vertex to the source vertex the destination vertex
         ///
         virtual Path FindPath(std::uint64_t src_vertex_id, std::uint64_t dst_vertex_id) = 0;
+
         virtual void Reset() = 0;
     };
 
@@ -63,14 +64,20 @@ namespace graph_util {
     /// OptimizedMemoryVertexState does not allocate the additional memory for the vertices that are not affected and performs
     /// get and set operations in O(1) time.
     ///
-    class OptimizedMemoryVertexState : public VertexState{
+    class OptimizedMemoryVertexState : public VertexState {
     public:
         std::uint64_t GetDistance(std::uint64_t vertex_id);
+
         bool SetDistance(std::uint64_t vertex_id, std::uint64_t value);
+
         std::uint64_t GetParent(std::uint64_t vertex_id);
+
         bool SetParent(std::uint64_t vertex_id, std::uint64_t parent_vertex_id);
+
         Path FindPath(std::uint64_t src_vertex_id, std::uint64_t dst_vertex_id);
+
         void Reset();
+
     private:
         // Parents map, vertex v is parent of the vertex parent[v]
         std::unordered_map<std::uint64_t, std::uint64_t> parent_;
@@ -82,16 +89,21 @@ namespace graph_util {
     };
 
     //TODO: implement
-    class OptimizedTimeVertexState : public VertexState{
+    class OptimizedTimeVertexState : public VertexState {
     public:
         std::uint64_t GetDistance(std::uint64_t vertex_id) = 0;
+
         bool SetDistance(std::uint64_t vertex_id, std::uint64_t value) = 0;
+
         std::uint64_t GetParent(std::uint64_t vertex_id) = 0;
+
         bool SetParent(std::uint64_t vertex_id, std::uint64_t parent_vertex_id) = 0;
+
         Path FindPath(std::uint64_t src_vertex_id, std::uint64_t dst_vertex_id) = 0;
+
         void Reset() = 0;
     };
 
-} // graph_util
+} // namespace graph_util
 
 #endif //GRAPHSTORE_VERTEX_STATE_HPP

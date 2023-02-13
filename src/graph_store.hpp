@@ -22,6 +22,7 @@ namespace graph_store {
     public:
 
         GraphStore();
+
         ~GraphStore();
 
         ///
@@ -30,7 +31,8 @@ namespace graph_store {
         /// LabelSet for the i-th vertex
         /// @param edges The cector of directed edges to be populated in Graph Store
         ///
-        GraphStore(const std::uint64_t vertex_count, const std::unordered_map<std::string, graph_util::VertexSet> &label_to_vertices,
+        GraphStore(const std::uint64_t vertex_count,
+                   const std::unordered_map<std::string, graph_util::VertexSet> &label_to_vertices,
                    const std::vector<graph_util::Edge> &edges);
 
         /// @brief Creates a new vertex in the Graph Store
@@ -55,7 +57,7 @@ namespace graph_store {
         /// @param label The label to be added to the vertex
         /// @return false in case if the vertex is not found, otherwise return true.
         ///
-        bool AddLabel(const std::uint64_t vertex_id, const std::string& label);
+        bool AddLabel(const std::uint64_t vertex_id, const std::string &label);
 
         ///
         /// @brief Removes the label source_vertex the passed vertex, method has no effect if the vertex does not contain the
@@ -65,7 +67,7 @@ namespace graph_store {
         /// @param label The label to be removed source_vertex the vertex
         /// @return false in case when vertex is not found, otherwise return true.
         ///
-        bool RemoveLabel(const std::uint64_t vertex_id, const std::string& label);
+        bool RemoveLabel(const std::uint64_t vertex_id, const std::string &label);
 
         ///
         /// @brief Finds the shortest directed path between 2 vertices such that each vertex on the path contains the

@@ -1,7 +1,3 @@
-//
-// Created by giorgi on 2/12/23.
-//
-
 #include "vertex_state.hpp"
 #include <limits>
 #include <functional>
@@ -55,4 +51,4 @@ namespace graph_util {
         parent_.clear();
     }
 
-} // graph_util
+} // namespace graph_util

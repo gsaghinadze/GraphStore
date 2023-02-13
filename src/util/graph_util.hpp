@@ -43,6 +43,6 @@ namespace graph_util {
         std::unordered_map<Label, VertexSet> label_to_vertices_;
     };
 
-} // graph_util
+} // namespace graph_util
 
 #endif //GRAPHSTORE_GRAPH_UTIL_HPP

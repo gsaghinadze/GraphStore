@@ -2,4 +2,4 @@
 
 namespace graph_util {
 
-} // graph_util
+} // namespace graph_util

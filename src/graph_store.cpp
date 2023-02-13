@@ -19,17 +19,17 @@ namespace graph_store {
         }
 
         // Populate labels.
-        for (const auto &[label, vertex_set] : label_to_vertices) {
-            for (const auto vertex : vertex_set) {
-                if (!AddLabel(vertex , label)) {
+        for (const auto &[label, vertex_set]: label_to_vertices) {
+            for (const auto vertex: vertex_set) {
+                if (!AddLabel(vertex, label)) {
                     throw std::invalid_argument("Failed to populate labels.");
                 }
             }
         }
 
         // Populate edges.
-        for (const auto edge : edges) {
-            if (!CreateEdge(edge.source_vertex , edge.destination_vertex)) {
+        for (const auto edge: edges) {
+            if (!CreateEdge(edge.source_vertex, edge.destination_vertex)) {
                 throw std::invalid_argument("Failed to populate edges.");
             }
         }
@@ -53,7 +53,7 @@ namespace graph_store {
         return true;
     }
 
-    bool GraphStore::AddLabel(const std::uint64_t vertex_id, const std::string& label) {
+    bool GraphStore::AddLabel(const std::uint64_t vertex_id, const std::string &label) {
         if (!vertexExists(vertex_id)) {
             return false;
         }
@@ -61,7 +61,7 @@ namespace graph_store {
         return true;
     }
 
-    bool GraphStore::RemoveLabel(const std::uint64_t vertex_id, const std::string& label) {
+    bool GraphStore::RemoveLabel(const std::uint64_t vertex_id, const std::string &label) {
         if (!vertexExists(vertex_id)) {
             return false;
         }
@@ -97,7 +97,7 @@ namespace graph_store {
             return std::nullopt;
         }
 
-        vertex_state_->SetDistance(src_vertex_id , 0);
+        vertex_state_->SetDistance(src_vertex_id, 0);
 
         // Queue for Breadth First Search.
         std::queue<std::uint64_t> vertex_queue;
@@ -120,8 +120,8 @@ namespace graph_store {
 
 
                 if (distance_to_neighbour > distance_to_curr + 1) {
-                    vertex_state_->SetDistance(neighbour , distance_to_curr + 1);
-                    vertex_state_->SetParent(neighbour , curr_vertex);
+                    vertex_state_->SetDistance(neighbour, distance_to_curr + 1);
+                    vertex_state_->SetParent(neighbour, curr_vertex);
                     vertex_queue.push(neighbour);
                 }
 
