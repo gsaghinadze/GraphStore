@@ -9,7 +9,7 @@ namespace graph_store {
         // Use optimized performance VertexState by default.
     }
 
-    GraphStore::GraphStore(Strategy strategy) {
+    GraphStore::GraphStore(const Strategy strategy) {
         if (strategy == Strategy::OPTIMIZED_MEMORY) {
             vertex_state_ = new graph_util::OptimizedMemoryVertexState;
         } else if (strategy == Strategy::OPTIMIZED_PERFORMANCE) {
@@ -18,7 +18,7 @@ namespace graph_store {
     }
 
     GraphStore::GraphStore(const std::uint64_t vertex_count,
-                           const std::unordered_map<std::string, graph_util::VertexSet> &label_to_vertices,
+                           const std::unordered_map<graph_util::Label, graph_util::VertexSet> &label_to_vertices,
                            const std::vector<graph_util::Edge> &edges,
                            const Strategy strategy) : GraphStore(strategy) {
 
@@ -48,8 +48,8 @@ namespace graph_store {
     }
 
     std::uint64_t GraphStore::CreateVertex() {
-        int id = graph_.neighbours_.size();
-        graph_.neighbours_.push_back(std::vector<std::uint64_t>());
+        std::uint64_t id = graph_.neighbours.size();
+        graph_.neighbours.emplace_back();
         vertex_state_->ProcessVertexAddition();
         return id;
     }
@@ -58,25 +58,25 @@ namespace graph_store {
         if (!vertexExists(src_vertex_id) || !vertexExists(dst_vertex_id)) {
             return false;
         }
-        graph_.neighbours_[src_vertex_id].push_back(dst_vertex_id);
+        graph_.neighbours[src_vertex_id].push_back(dst_vertex_id);
         return true;
     }
 
-    bool GraphStore::AddLabel(const std::uint64_t vertex_id, const std::string &label) {
+    bool GraphStore::AddLabel(const std::uint64_t vertex_id, const graph_util::Label &label) {
         if (!vertexExists(vertex_id)) {
             return false;
         }
-        graph_.label_to_vertices_[label].insert(vertex_id);
+        graph_.label_to_vertices[label].insert(vertex_id);
         return true;
     }
 
-    bool GraphStore::RemoveLabel(const std::uint64_t vertex_id, const std::string &label) {
+    bool GraphStore::RemoveLabel(const std::uint64_t vertex_id, const graph_util::Label &label) {
         if (!vertexExists(vertex_id)) {
             return false;
         }
 
-        auto vertices_it = graph_.label_to_vertices_.find(label);
-        if (vertices_it != graph_.label_to_vertices_.end()) {
+        auto vertices_it = graph_.label_to_vertices.find(label);
+        if (vertices_it != graph_.label_to_vertices.end()) {
             vertices_it->second.erase(vertex_id);
         }
 
@@ -85,22 +85,22 @@ namespace graph_store {
 
     std::optional<graph_util::Path>
     GraphStore::ShortestPath(const std::uint64_t src_vertex_id, const std::uint64_t dst_vertex_id,
-                             const std::string &label) {
-        // Return if one of both vertices do not exist.
+                             const graph_util::Label &label) {
+        // Return if one or both vertices do not exist.
         if (!vertexExists(src_vertex_id) || !vertexExists(dst_vertex_id)) {
             return resetVertexStateAndReturn(std::nullopt);
         }
 
-        const auto labeled_vertices_pair = graph_.label_to_vertices_.find(label);
+        const auto labeled_vertices_pair = graph_.label_to_vertices.find(label);
 
-        // If the label does not exist in the map, path cannot be found and we can immediately return.
-        if (labeled_vertices_pair == graph_.label_to_vertices_.end()) {
+        // If the label is not set to any vertex, we can immediately return.
+        if (labeled_vertices_pair == graph_.label_to_vertices.end()) {
             return resetVertexStateAndReturn(std::nullopt);
         }
 
         const auto &valid_vertices = labeled_vertices_pair->second;
 
-        // if the source or destination vertices do not have the specified label, labelled path does not exists between them.
+        // if the source or destination vertices do not have the specified label, labelled path does not exist between them.
         if (valid_vertices.count(src_vertex_id) == 0 || valid_vertices.count(dst_vertex_id) == 0) {
             return resetVertexStateAndReturn(std::nullopt);
         }
@@ -115,10 +115,10 @@ namespace graph_store {
         bool reached_dst_vertex = (src_vertex_id == dst_vertex_id);
 
         while (!vertex_queue.empty() && !reached_dst_vertex) {
-            int curr_vertex = vertex_queue.front();
+            std::uint64_t curr_vertex = vertex_queue.front();
             vertex_queue.pop();
 
-            for (const int neighbour: graph_.neighbours_[curr_vertex]) {
+            for (const std::uint64_t neighbour: graph_.neighbours[curr_vertex]) {
                 if (valid_vertices.count(neighbour) == 0) {
                     continue;
                 }
@@ -151,8 +151,8 @@ namespace graph_store {
         return path;
     }
 
-    bool GraphStore::vertexExists(const std::uint64_t vertex_id) {
-        return vertex_id < graph_.neighbours_.size();
+    bool GraphStore::vertexExists(const std::uint64_t vertex_id) const {
+        return vertex_id < graph_.neighbours.size();
     }
 
     std::optional<graph_util::Path> GraphStore::resetVertexStateAndReturn(const std::optional<graph_util::Path> &path) {

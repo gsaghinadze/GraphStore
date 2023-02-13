@@ -1,7 +1,3 @@
-//
-// Created by giorgi on 2/12/23.
-//
-
 #ifndef GRAPHSTORE_VERTEX_STATE_HPP
 #define GRAPHSTORE_VERTEX_STATE_HPP
 
@@ -20,6 +16,9 @@ namespace graph_util {
     ///
     class VertexState {
     public:
+        /// Destroys VertexState
+        virtual ~VertexState() = default;
+
         ///
         /// @param vertex_id The vertex ID to process
         /// @return The distance to the vertex if it's found
@@ -68,15 +67,16 @@ namespace graph_util {
     ///
     class OptimizedMemoryVertexState : public VertexState {
     public:
-        std::uint64_t GetDistance(std::uint64_t vertex_id);
 
-        bool SetDistance(std::uint64_t vertex_id, std::uint64_t value);
+        std::uint64_t GetDistance(std::uint64_t vertex_id) override;
 
-        std::uint64_t GetParent(std::uint64_t vertex_id);
+        bool SetDistance(std::uint64_t vertex_id, std::uint64_t value) override;
 
-        bool SetParent(std::uint64_t vertex_id, std::uint64_t parent_vertex_id);
+        std::uint64_t GetParent(std::uint64_t vertex_id) override;
 
-        void Reset();
+        bool SetParent(std::uint64_t vertex_id, std::uint64_t parent_vertex_id) override;
+
+        void Reset() override;
 
     private:
         // Parents map, vertex v is parent of the vertex parent[v].
@@ -95,17 +95,18 @@ namespace graph_util {
     ///
     class OptimizedPerformanceVertexState : public VertexState {
     public:
-        std::uint64_t GetDistance(std::uint64_t vertex_id);
+        std::uint64_t GetDistance(std::uint64_t vertex_id) override;
 
-        bool SetDistance(std::uint64_t vertex_id, std::uint64_t value);
+        bool SetDistance(std::uint64_t vertex_id, std::uint64_t value) override;
 
-        std::uint64_t GetParent(std::uint64_t vertex_id);
+        std::uint64_t GetParent(std::uint64_t vertex_id) override;
 
-        bool SetParent(std::uint64_t vertex_id, std::uint64_t parent_vertex_id);
+        bool SetParent(std::uint64_t vertex_id, std::uint64_t parent_vertex_id) override;
 
         void Reset() override;
 
         void ProcessVertexAddition() override;
+
     private:
 
         // Parents vector, vertex v is the parent of the vertex parent[v].

@@ -79,7 +79,7 @@ namespace graph_util {
     }
 
     void OptimizedPerformanceVertexState::Reset() {
-        for (const auto vertex : affected_vertices_) {
+        for (const auto vertex: affected_vertices_) {
             parent_[vertex] = 0;
             distances_[vertex] = std::numeric_limits<std::uint64_t>::max();
         }

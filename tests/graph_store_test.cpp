@@ -3,13 +3,18 @@
 #include "util/graph_util.hpp"
 
 #include <chrono>
+#include <string>
+#include <cstdint>
+#include <unordered_map>
+#include <unordered_set>
+#include <algorithm>
 
 constexpr std::uint64_t inf = 1e+9;
 using adj_matrix = std::vector<std::vector<std::uint64_t>>;
 
 
 // Floyd-Warshall algorithm to calculate the shortest paths for all pairs of vertices.
-adj_matrix FloydWarshall(const std::int64_t vertex_count, const std::vector<graph_util::Edge> &edges) {
+adj_matrix FloydWarshall(const std::uint64_t vertex_count, const std::vector<graph_util::Edge> &edges) {
     adj_matrix dis(vertex_count, std::vector<std::uint64_t>(vertex_count, inf));
 
     for (const auto &edge: edges) {
@@ -30,11 +35,11 @@ adj_matrix FloydWarshall(const std::int64_t vertex_count, const std::vector<grap
     return dis;
 }
 
-std::vector<graph_util::Edge> GenerateRandomGraph(std::int64_t vertex_count, std::int64_t edge_count) {
+std::vector<graph_util::Edge> GenerateRandomGraph(std::uint64_t vertex_count, std::uint64_t edge_count) {
     std::vector<graph_util::Edge> edges;
 
     for (auto i = 0; i < edge_count; ++i) {
-        graph_util::Edge edge;
+        graph_util::Edge edge{0,0};
         // Multiple edges are allowed according to the Graph Store implementation.
         edge.source_vertex = std::rand() % vertex_count;
         edge.destination_vertex = std::rand() % vertex_count;
@@ -264,7 +269,8 @@ TEST_P(GraphStoreTestWithDifferentStrategies, TwoVertexGraphWithMultipleLabels) 
 }
 
 TEST_P(GraphStoreTestWithDifferentStrategies, RandomGraphsWithOneLabel) {
-    for (auto i = 0; i < 100; ++i) {
+    std::uint64_t graph_count = 100;
+    while (graph_count--) {
         std::uint64_t vertex_count = std::rand() % 50 + 2;
         std::uint64_t edge_count = std::rand() % (vertex_count * (vertex_count - 1) / 2);
 
@@ -293,7 +299,8 @@ TEST_P(GraphStoreTestWithDifferentStrategies, RandomGraphsWithOneLabel) {
 }
 
 TEST_P(GraphStoreTestWithDifferentStrategies, RandomGraphsWithMultipleLabels) {
-    for (auto i = 0; i < 100; ++i) {
+    std::uint64_t graph_count = 100;
+    while (graph_count--){
         std::uint64_t vertex_count = rand() % 30 + 2;
         std::uint64_t edge_count = rand() % (vertex_count * (vertex_count - 1) / 2);
 
@@ -310,16 +317,16 @@ TEST_P(GraphStoreTestWithDifferentStrategies, RandomGraphsWithMultipleLabels) {
         const uint64_t label_count = 10;
         // Generate random vertex sets for 10 different labels.
         for (auto i = 0; i < label_count; ++i) {
-            auto num_vertices = std::rand() % vertex_count + 1;
+            std::uint64_t num_vertices = std::rand() % vertex_count + 1;
             std::random_shuffle(vertex_vector.begin(), vertex_vector.end());
             std::string label = std::to_string(i);
             label_to_vertices[label] = graph_util::VertexSet(vertex_vector.begin(),
-                                                             vertex_vector.begin() + num_vertices);
+                                                             vertex_vector.begin() + std::int64_t(num_vertices));
         }
 
         graph_store::GraphStore gs(vertex_count, label_to_vertices, edges, GetParam());
 
-        // Calculate the shortest paths for each label.
+        // Calculate the shortest paths between all pairs of vertices for each label.
         for (auto l = 0; l < label_count; ++l) {
             std::string label = std::to_string(l);
             adj_matrix got_dis_matrix(vertex_count, std::vector<std::uint64_t>(vertex_count, inf));
@@ -356,6 +363,7 @@ TEST_P(GraphStoreTestWithDifferentStrategies, RandomGraphsWithMultipleLabels) {
     }
 }
 
+// Performance test on random graph with 10^5 vertices, and 10^6 edges.
 TEST_P(GraphStoreTestWithDifferentStrategies, PerFormanceTest) {
     const std::uint64_t vertex_count = 100000;
     const std::uint64_t edge_count = 1000000;
