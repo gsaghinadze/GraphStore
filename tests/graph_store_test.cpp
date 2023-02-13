@@ -2,6 +2,8 @@
 #include "graph_store.hpp"
 #include "util/graph_util.hpp"
 
+#include <chrono>
+
 constexpr std::uint64_t inf = 1e+9;
 using adj_matrix = std::vector<std::vector<std::uint64_t>>;
 
@@ -34,8 +36,8 @@ std::vector<graph_util::Edge> GenerateRandomGraph(std::int64_t vertex_count, std
     for (auto i = 0; i < edge_count; ++i) {
         graph_util::Edge edge;
         // multiple edges are allowed according to the Graph Store implementation.
-        edge.source_vertex = rand() % vertex_count;
-        edge.destination_vertex = rand() % vertex_count;
+        edge.source_vertex = std::rand() % vertex_count;
+        edge.destination_vertex = std::rand() % vertex_count;
         edges.push_back(edge);
     }
 
@@ -227,8 +229,8 @@ TEST(GraphStoreTest, TwoVertexGraphWithMultipleLabels) {
 
 TEST(GraphStoreTest, RandomGraphsWithOneLabel) {
     for (auto i = 0; i < 100; ++i) {
-        std::uint64_t vertex_count = rand() % 50 + 2;
-        std::uint64_t edge_count = rand() % (vertex_count * (vertex_count - 1) / 2);
+        std::uint64_t vertex_count = std::rand() % 50 + 2;
+        std::uint64_t edge_count = std::rand() % (vertex_count * (vertex_count - 1) / 2);
 
         std::string label = "testLabel";
         graph_util::VertexSet vertices;
@@ -272,7 +274,7 @@ TEST(GraphStoreTest, RandomGraphsWithMultipleLabels) {
         const uint64_t label_count = 10;
         // Generate random vertex sets for 10 different labels.
         for (auto i = 0; i < label_count; ++i) {
-            auto num_vertices = rand() % vertex_count + 1;
+            auto num_vertices = std::rand() % vertex_count + 1;
             std::random_shuffle(vertex_vector.begin(), vertex_vector.end());
             std::string label = std::to_string(i);
             label_to_vertices[label] = graph_util::VertexSet(vertex_vector.begin(),
@@ -315,7 +317,45 @@ TEST(GraphStoreTest, RandomGraphsWithMultipleLabels) {
 
             ASSERT_EQ(got_dis_matrix, want_dis_matrix);
         }
-
-
     }
+}
+
+TEST(GraphStoreTest, PerFormanceTest) {
+    const std::uint64_t vertex_count = 100000;
+    const std::uint64_t edge_count = 1000000;
+    const std::uint64_t label_count = 10;
+    const std::uint64_t label_length = 1000;
+    const std::uint64_t queries = 100;
+100
+    auto start_time = std::chrono::system_clock::now();
+
+    graph_store::GraphStore gs;
+
+    for (auto i = 0; i < vertex_count; ++i) {
+        gs.CreateVertex();
+    }
+
+    for (auto i = 0; i < edge_count; ++i) {
+        gs.CreateEdge(std::rand() % vertex_count, std::rand() % vertex_count);
+    }
+
+    std::vector<std::string> labels(label_count);
+    for (auto i = 0; i < label_count; ++i) {
+        for (auto j = 0; j < label_length; ++j) {
+            labels[i] += char(i + '0');
+        }
+        for (auto j = 0; j < vertex_count; ++j) {
+            gs.AddLabel(j , labels[i]);
+        }
+    }
+
+    for (auto i = 0; i < queries; ++i) {
+        gs.ShortestPath(0 , vertex_count - 1, labels[std::rand() % label_count]);
+    }
+
+    auto end_time = std::chrono::system_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+
+    ASSERT_TRUE(elapsed.count() < 10000);
+
 }
